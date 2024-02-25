@@ -12,7 +12,7 @@ pub struct HtmlElement {
 
 impl HtmlElement {
     // Helper function to create a new HtmlElement
-    fn new(name: String, attributes: HashMap<String, String>) -> Self {
+    pub fn new(name: String, attributes: HashMap<String, String>) -> Self {
         HtmlElement {
             name,
             text: String::new(),

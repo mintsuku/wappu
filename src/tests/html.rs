@@ -1,6 +1,6 @@
 #[cfg(test)]
-mod tests {
-    use crate::engine::html::Html;
+mod html_tests {
+    use crate::Html; 
 
     #[test]
     fn test_parse_complete_html() {

@@ -75,5 +75,26 @@ impl<'a> Selection<'a> {
             .join(" ")
     }
 
+    pub fn id(&self) -> Option<String> {
+        self.elements.iter()
+            .filter_map(|elem| elem.attributes.get("id"))
+            .cloned()
+            .next()
+    }
+
+    pub fn href(&self) -> Option<String> {
+        self.elements.iter()
+            .filter_map(|elem| elem.attributes.get("href"))
+            .cloned()
+            .next()
+    }
+
+    pub fn src(&self) -> Option<String> {
+        self.elements.iter()
+            .filter_map(|elem| elem.attributes.get("src"))
+            .cloned()
+            .next()
+    }
+
 }
 
