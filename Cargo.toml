@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Wappu is a fast and flexible web scraping library for Rust, designed to efficiently navigate and extract data from websites. Perfect for data mining, content aggregation, and web automation tasks."
 license = "Apache-2.0"
-authors = ["mintsuku <moxydev@gmail.com>"]
+authors = ["mintsuku <moxxydev@gmail.com>"]
 
 
 [lib]
