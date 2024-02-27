@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod client_tests {
     use crate::WappuClient;
+
     
     #[tokio::test]
     async fn test_wappu_client_get() {
@@ -49,9 +50,10 @@ mod client_tests {
 
 #[cfg(test)]
 mod client_error_tests {
-    use crate::{WappuClient, WappuError};
     use reqwest::StatusCode;
     use tokio::time::{timeout, Duration};
+
+    use crate::{WappuClient, WappuError};
 
     #[tokio::test]
     async fn test_wappu_client_get_network_error() {

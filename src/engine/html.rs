@@ -1,69 +1,87 @@
+extern crate html5ever;
+extern crate markup5ever_rcdom as rcdom;
+
+use html5ever::{parse_document, tendril::TendrilSink};
+use markup5ever_rcdom::{Handle, NodeData, RcDom};
 use std::collections::HashMap;
 
-use super::parser::{Parser, Token};
+pub struct HtmlParser;
+
+impl HtmlParser {
+    pub fn new() -> Self {
+        HtmlParser {}
+    }
+
+    pub fn parse_html(&self, input: &str) -> HtmlElement {
+        let dom = parse_document(RcDom::default(), Default::default()).one(input);
+
+        HtmlElement::from_dom(&dom.document)
+    }
+}
 
 #[derive(Debug)]
 pub struct HtmlElement {
-    pub name: String,
+    pub tag_name: Option<String>,
     pub text: String,
     pub children: Vec<HtmlElement>,
     pub attributes: HashMap<String, String>,
 }
 
 impl HtmlElement {
-    // Helper function to create a new HtmlElement
-    pub fn new(name: String, attributes: HashMap<String, String>) -> Self {
-        HtmlElement {
-            name,
-            text: String::new(),
-            children: Vec::new(),
-            attributes,
-        }
-    }
-}
+    fn from_dom(handle: &Handle) -> Self {
+        match handle.data {
+            NodeData::Document => {
+                let children = handle
+                    .children
+                    .borrow()
+                    .iter()
+                    .map(HtmlElement::from_dom)
+                    .collect();
 
-pub struct Html;
-
-impl Html {
-    pub fn new() -> Html {
-        Html {}
-    }
-    
-    pub fn parse_html(&self, html: &str) -> HtmlElement {
-        let tokens = Parser::new().tokenize(html);
-        let mut stack: Vec<HtmlElement> = Vec::new();
-
-        // Initialize the root element with an empty HashMap for attributes
-        let root = HtmlElement::new("root".to_string(), HashMap::new());
-        stack.push(root);
-
-        for token in tokens {
-            match token {
-                Token::StartTag(name, attributes) => {
-                    let new_element = HtmlElement::new(name, attributes);
-                    stack.push(new_element);
-                },
-                Token::Text(text) => {
-                    if let Some(last) = stack.last_mut() {
-                        // Append text to the current element's text.
-                        if !last.text.is_empty() {
-                            last.text.push_str(" ");
-                        }
-                        last.text.push_str(&text);
-                    }
-                },
-                Token::EndTag(_) => {
-                    if stack.len() > 1 {
-                        let finished_element = stack.pop().unwrap();
-                        if let Some(last) = stack.last_mut() {
-                            last.children.push(finished_element);
-                        }
-                    }
-                },
+                HtmlElement {
+                    tag_name: None,
+                    text: String::new(),
+                    children,
+                    attributes: HashMap::new(),
+                }
             }
-        }
+            NodeData::Element { ref name, ref attrs, .. } => {
+                let tag_name = Some(name.local.to_string());
+                let attributes = attrs.borrow().iter().map(|attr| {
+                    (attr.name.local.to_string(), attr.value.to_string())
+                }).collect();
 
-        // The first element in the stack is the root element containing the entire parsed HTML structure.
-        stack.pop().unwrap()
+                let mut children = Vec::new();
+                let mut text = String::new();
+                for child in handle.children.borrow().iter() {
+                    let child_element = HtmlElement::from_dom(child);
+                    // Append child text to the parent element's text if the child is a text node.
+                    if child_element.tag_name.is_none() {
+                        text += &child_element.text;
+                    } else {
+                        children.push(child_element);
+                    }
+                }
+
+                HtmlElement {
+                    tag_name,
+                    text, // Now contains the aggregated text of its child text nodes.
+                    children,
+                    attributes,
+                }
+            }
+            NodeData::Text { ref contents } => HtmlElement {
+                tag_name: None,
+                text: contents.borrow().to_string(),
+                children: vec![],
+                attributes: HashMap::new(),
+            },
+            _ => HtmlElement {
+                tag_name: None,
+                text: String::new(),
+                children: vec![],
+                attributes: HashMap::new(),
+            },
+        }
     }
 }

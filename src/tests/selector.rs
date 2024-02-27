@@ -1,120 +1,96 @@
 #[cfg(test)]
-mod selector_tests {
-    use crate::Selector;
-    use crate::engine::html::HtmlElement;
-    use std::collections::HashMap;
+mod tests {
+    use crate::{engine::selector::Selector, select_by_class, select_by_tag_name, HtmlParser, WappuClient}; // Assuming the HtmlElement struct is defined in a module named `html`
 
-    // Helper function to create an HtmlElement with attributes
-    fn create_element(name: &str, attributes: HashMap<&str, &str>) -> HtmlElement {
-        HtmlElement::new(
-            name.to_string(),
-            attributes.into_iter().map(|(k, v)| (k.to_string(), v.to_string())).collect(),
-        )
+    #[test]
+    fn test_html_parsing_and_selection() {
+        let parser = HtmlParser::new();
+        let html = r#"
+            <div class="content">
+                <h1 id="title">Test Title</h1>
+                <a href="https://example.com">Example Link</a>
+                <img src="image.jpg" alt="An image">
+            </div>
+        "#;
+
+        let parsed_html = parser.parse_html(html);
+
+        // Test selecting by tag name
+        let mut h1_selector = Selector::new();
+        let h1_selection = h1_selector.from_tag_name("h1").select(&parsed_html);
+        assert_eq!(h1_selection.text(), "Test Title");
+        assert_eq!(h1_selection.tag_name(), Some("h1".to_string()));
+        assert_eq!(h1_selection.id(), Some("title".to_string()));
+
+        let mut a_selector = Selector::new();
+        let a_selection = a_selector.from_tag_name("a").select(&parsed_html);
+        assert_eq!(a_selection.text(), "Example Link");
+        assert_eq!(a_selection.href(), Some("https://example.com".to_string()));
+
+        let mut img_selector = Selector::new();
+        let img_selection = img_selector.from_tag_name("img").select(&parsed_html);
+        assert_eq!(img_selection.src(), Some("image.jpg".to_string()));
     }
 
     #[test]
-    fn test_select_by_tag_name() {
-        let root = create_element("div", HashMap::new());
-        let child1 = create_element("span", HashMap::new());
-        let child2 = create_element("span", HashMap::from([("class", "test")]));
+    fn test_html_parsing_and_selection_with_nested_elements() {
+        let parser = HtmlParser::new();
+        let html = r#"
+            <div class="content">
+                <h1 id="title">Test Title</h1>
+                <a href="https://example.com">Example Link</a>
+                <div>
+                    <p>Some text</p>
+                    <a href="https://example.com">Another link</a>
+                </div>
+            </div>
+        "#;
 
-        let mut root_with_children = root;
-        root_with_children.children.push(child1);
-        root_with_children.children.push(child2);
+        let parsed_html = parser.parse_html(html);
 
-        let selector = Selector::from_tag_name("span");
-        let selection = selector.select(&root_with_children);
+        // Test selecting by tag name
+        let mut p_selector = Selector::new();
+        let p_selection = p_selector.from_tag_name("p").select(&parsed_html);
+        assert_eq!(p_selection.text(), "Some text");
 
-        assert_eq!(selection.len(), 2);
+        let mut a_selector = Selector::new();
+        let a_selection = a_selector.from_tag_name("a").select(&parsed_html);
+        assert_eq!(a_selection.text(), "Example Link Another link");
     }
-
-    #[test]
-    fn test_selection_text() {
-        let mut root = create_element("div", HashMap::new());
-        root.children.push(HtmlElement {
-            name: "p".to_string(),
-            text: "Test text".to_string(),
-            children: Vec::new(),
-            attributes: HashMap::new(),
-        });
-
-        let selector = Selector::from_tag_name("p");
-        let selection = selector.select(&root);
-
-        assert_eq!(selection.text(), "Test text");
-    }
-
-    #[test]
-    fn test_selection_class() {
-        let mut root = create_element("div", HashMap::new());
-        root.children.push(create_element("p", HashMap::from([("class", "test")])));
-        
-        let selector = Selector::from_tag_name("p");
-        let selection = selector.select(&root);
-
-        assert_eq!(selection.class(), "test");
-    }
-
-    #[test]
-    fn test_selection_id() {
-        let mut root = create_element("div", HashMap::new());
-        root.children.push(create_element("p", HashMap::from([("id", "unique")])));
-        
-        let selector = Selector::from_tag_name("p");
-        let selection = selector.select(&root);
-
-        assert_eq!(selection.id(), Some("unique".to_string()));
-    }
-
-    #[test]
-    fn test_selection_href() {
-        let mut root = create_element("a", HashMap::new());
-        root.children.push(create_element("a", HashMap::from([("href", "http://example.com")])));
-        
-        let selector = Selector::from_tag_name("a");
-        let selection = selector.select(&root);
-
-        assert_eq!(selection.href(), Some("http://example.com".to_string()));
-    }
-
-    #[test]
-    fn test_selection_src() {
-        let mut root = create_element("img", HashMap::new());
-        root.children.push(create_element("img", HashMap::from([("src", "image.png")])));
-        
-        let selector = Selector::from_tag_name("img");
-        let selection = selector.select(&root);
-
-        assert_eq!(selection.src(), Some("image.png".to_string()));
-    }
-}
-
-
-#[cfg(test)]
-mod client_integration_tests {
-    use crate::{WappuClient, Selector, Html};
 
     #[tokio::test]
-    async fn test_fetch_and_parse_title_from_example_com() {
+    async fn test_selection_request() {
         let client = WappuClient::new();
-        // Fetch the HTML content from example.com
-        let html_content = client.get("http://example.com").await.expect("Failed to fetch content");
+        let result = client.get("https://doc.rust-lang.org/book/").await.unwrap();
+        let html = HtmlParser::new().parse_html(&result);
 
-        // Parse the fetched HTML to create an HtmlElement structure
-        let parsed_html = Html::new().parse_html(&html_content);
+        let mut header_selector = Selector::new();
+        let header = header_selector.from_class_name("header").select(&html);
 
-        // Create a Selector for the <title> tag
-        let title_selector = Selector::from_tag_name("h1");
+        assert_eq!(header.text().trim(), "The Rust Programming Language");
+    }
 
-        // Select the <title> element from the parsed HTML
-        let title_selection = title_selector.select(&parsed_html);
+    #[tokio::test]
+    async fn test_selection_macro() {
+        let client = WappuClient::new();
+        let result = client.get("https://doc.rust-lang.org/book/").await.unwrap();
+        let html = HtmlParser::new().parse_html(&result);
 
-        // Get the text content of the <title> element
-        let title_text = title_selection.text();
+        let header = select_by_class!(&html, "header");
+        
+        // No need to manually create or mutate a `Selector` instance here
+        assert_eq!(header.text().trim(), "The Rust Programming Language");
+    }
 
-        // Print the title text for debugging
-        println!("Title: {}", title_text);
+    #[tokio::test]
+    async fn test_selection_by_tag_macro() {
+        let client = WappuClient::new();
+        let result = client.get("https://doc.rust-lang.org/book/").await.unwrap();
+        let html = HtmlParser::new().parse_html(&result);
 
-        assert_eq!(title_text, "Example Domain");
+        let header = select_by_tag_name!(&html, "h1");
+        
+        // No need to manually create or mutate a `Selector` instance here
+        assert_eq!(header.text().trim(), "The Rust Programming Language");
     }
 }

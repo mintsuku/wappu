@@ -1,39 +1,71 @@
 use super::html::HtmlElement;
 
+#[macro_export]
+macro_rules! select_by_tag_name {
+    ($element:expr, $tag_name:expr) => {
+        Selector::new().from_tag_name($tag_name).select($element)
+    };
+}
+
+#[macro_export]
+macro_rules! select_by_class {
+    ($element:expr, $class_name:expr) => {
+        Selector::new().from_class_name($class_name).select($element)
+    };
+}
+
+
 pub struct Selector {
     tag_name: Option<String>,
-    // Future fields for other types of selectors like class, id, etc.
+    class_name: Option<String>,
 }
 
 impl Selector {
-    pub fn from_tag_name(tag_name: &str) -> Self {
+    pub fn new() -> Self {
         Selector {
-            tag_name: Some(tag_name.to_string()),
+            tag_name: None,
+            class_name: None,
         }
     }
 
-    // Annotate this method with a lifetime parameter `'a`
-    // This ties the lifetime of the returned references to the lifetime of the input `element`
+
+    pub fn from_tag_name(&mut self, tag_name: &str) -> &mut Self {
+        self.tag_name = Some(tag_name.to_string());
+        self
+    }
+
+    pub fn from_class_name(&mut self, class_name: &str) -> &mut Self {
+        self.class_name = Some
+        (class_name.to_string());
+        self
+    }
+
     pub fn select<'a>(&self, element: &'a HtmlElement) -> Selection<'a> {
         let mut selected: Vec<&'a HtmlElement> = Vec::new();
         self.select_recursive(element, &mut selected);
         Selection::new(selected)
     }
 
-    // Ensure this helper method also uses the same lifetime parameter `'a`
     fn select_recursive<'a>(&self, element: &'a HtmlElement, selected: &mut Vec<&'a HtmlElement>) {
-        if let Some(ref tag_name) = self.tag_name {
-            if element.name == *tag_name {
-                selected.push(element);
-            }
+        if self.tag_name.as_ref() == element.tag_name.as_ref() || self.matches_class(element) {
+            selected.push(element);
         }
-        // Iterate over children to search deeply
         for child in &element.children {
             self.select_recursive(child, selected);
         }
     }
-}
 
+    fn matches_class(&self, element: &HtmlElement) -> bool {
+        match self.class_name {
+            Some(ref class_name) => {
+                element.attributes.get("class").map_or(false, |classes| {
+                    classes.split_whitespace().any(|class| class == class_name)
+                })
+            }
+            None => false,
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct Selection<'a> {
@@ -41,12 +73,10 @@ pub struct Selection<'a> {
 }
 
 impl<'a> Selection<'a> {
-    // Constructor that takes selected elements
     pub fn new(elements: Vec<&'a HtmlElement>) -> Self {
         Selection { elements }
     }
 
-    // Method to get the combined text of all selected elements
     pub fn text(&self) -> String {
         self.elements
             .iter()
@@ -55,46 +85,47 @@ impl<'a> Selection<'a> {
             .join(" ")
     }
 
-    pub fn name (&self) -> String {
+    pub fn tag_name(&self) -> Option<String> {
         self.elements
             .iter()
-            .map(|elem| elem.name.clone())
-            .collect::<Vec<String>>()
-            .join(" ")
+            .filter_map(|elem| elem.tag_name.as_ref())
+            .next()
+            .cloned()
     }
 
     pub fn len(&self) -> usize {
         self.elements.len()
     }
 
-    pub fn class(&self) -> String {
-        self.elements.iter()
+    pub fn class(&self) -> Option<String> {
+        self.elements
+            .iter()
             .filter_map(|elem| elem.attributes.get("class"))
+            .next()
             .cloned()
-            .collect::<Vec<String>>()
-            .join(" ")
     }
 
     pub fn id(&self) -> Option<String> {
-        self.elements.iter()
+        self.elements
+            .iter()
             .filter_map(|elem| elem.attributes.get("id"))
-            .cloned()
             .next()
+            .cloned()
     }
 
     pub fn href(&self) -> Option<String> {
-        self.elements.iter()
+        self.elements
+            .iter()
             .filter_map(|elem| elem.attributes.get("href"))
-            .cloned()
             .next()
+            .cloned()
     }
 
     pub fn src(&self) -> Option<String> {
-        self.elements.iter()
+        self.elements
+            .iter()
             .filter_map(|elem| elem.attributes.get("src"))
-            .cloned()
             .next()
+            .cloned()
     }
-
 }
-

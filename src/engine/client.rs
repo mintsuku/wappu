@@ -24,7 +24,6 @@ impl From<reqwest::Error> for WappuError {
     }
 }
 
-
 pub struct WappuClient {
     client: reqwest::Client,
 }

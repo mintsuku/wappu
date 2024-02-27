@@ -11,5 +11,8 @@ authors = ["mintsuku <moxxydev@gmail.com>"]
 path = "src/lib.rs" 
 
 [dependencies]
+html5ever = "0.26.0"
+markup5ever = "0.11.0"
+markup5ever_rcdom = "0.2.0"
 reqwest = "0.11.24"
 tokio = { version = "1.36.0", features = ["full"] }
