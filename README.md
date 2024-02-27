@@ -21,7 +21,7 @@ Add Wappu to your project's `Cargo.toml`:
 
 ```toml
 [dependencies]
-wappu = "0.1.0"
+wappu = "0.2.0"
 ```
 
 ### Quick Example
