@@ -1,4 +1,4 @@
-use reqwest;
+use reqwest::{self, header::HeaderMap};
 use std::error::Error;
 
 #[derive(Debug)]
@@ -14,6 +14,16 @@ impl std::fmt::Display for WappuError {
             WappuError::UnexpectedStatusCode(ref code) => write!(f, "Unexpected status code: {}", code),
         }
     }
+}
+#[macro_export]
+macro_rules! headers {
+    ($($key:expr => $value:expr),* $(,)?) => {{
+        let mut map = reqwest::header::HeaderMap::new();
+        $(
+            map.insert($key, $value.parse().unwrap());
+        )*
+        map
+    }};
 }
 
 impl Error for WappuError {}
@@ -35,8 +45,12 @@ impl WappuClient {
         }
     }
 
-    pub async fn get(&self, url: &str) -> Result<String, WappuError> {
-        let response = self.client.get(url).send().await?;
+    pub async fn get(&self, url: &str, headers: Option<HeaderMap>) -> Result<String, WappuError> {
+        let mut request = self.client.get(url);
+        if let Some(headers) = headers {
+            request = request.headers(headers);
+        }
+        let response = request.send().await?;
         if !response.status().is_success() {
             return Err(WappuError::UnexpectedStatusCode(response.status()));
         }
@@ -45,9 +59,13 @@ impl WappuClient {
     }
 
     pub async fn post(
-        &self, url: &str, body: &str,
+        &self, url: &str, body: &str, headers: Option<HeaderMap>,
     ) -> Result<String, WappuError> {
-        let response = self.client.post(url).body(body.to_string()).send().await?;
+        let mut request = self.client.post(url).body(body.to_string());
+        if let Some(headers) = headers {
+            request = request.headers(headers);
+        }
+        let response = request.send().await?;
         if !response.status().is_success() {
             return Err(WappuError::UnexpectedStatusCode(response.status()));
         }
@@ -55,10 +73,14 @@ impl WappuClient {
         Ok(body)
     }
 
-    pub async fn put (
-        &self, url: &str, body: &str,
+    pub async fn put(
+        &self, url: &str, body: &str, headers: Option<HeaderMap>,
     ) -> Result<String, WappuError> {
-        let response = self.client.put(url).body(body.to_string()).send().await?;
+        let mut request = self.client.put(url).body(body.to_string());
+        if let Some(headers) = headers {
+            request = request.headers(headers);
+        }
+        let response = request.send().await?;
         if !response.status().is_success() {
             return Err(WappuError::UnexpectedStatusCode(response.status()));
         }
@@ -66,10 +88,14 @@ impl WappuClient {
         Ok(body)
     }
 
-    pub async fn delete (
-        &self, url: &str,
+    pub async fn delete(
+        &self, url: &str, headers: Option<HeaderMap>,
     ) -> Result<String, WappuError> {
-        let response = self.client.delete(url).send().await?;
+        let mut request = self.client.delete(url);
+        if let Some(headers) = headers {
+            request = request.headers(headers);
+        }
+        let response = request.send().await?;
         if !response.status().is_success() {
             return Err(WappuError::UnexpectedStatusCode(response.status()));
         }
@@ -77,10 +103,14 @@ impl WappuClient {
         Ok(body)
     }
 
-    pub async fn patch (
-        &self, url: &str, body: &str,
+    pub async fn patch(
+        &self, url: &str, body: &str, headers: Option<HeaderMap>,
     ) -> Result<String, WappuError> {
-        let response = self.client.patch(url).body(body.to_string()).send().await?;
+        let mut request = self.client.patch(url).body(body.to_string());
+        if let Some(headers) = headers {
+            request = request.headers(headers);
+        }
+        let response = request.send().await?;
         if !response.status().is_success() {
             return Err(WappuError::UnexpectedStatusCode(response.status()));
         }
@@ -88,14 +118,15 @@ impl WappuClient {
         Ok(body)
     }
 
-    pub async fn head (
-        &self, url: &str,
-    ) -> Result<String, WappuError> {
-        let response = self.client.head(url).send().await?;
+    pub async fn head(&self, url: &str, headers: Option<HeaderMap>) -> Result<(), WappuError> {
+        let mut request = self.client.head(url);
+        if let Some(headers) = headers {
+            request = request.headers(headers);
+        }
+        let response = request.send().await?;
         if !response.status().is_success() {
             return Err(WappuError::UnexpectedStatusCode(response.status()));
         }
-        let body = response.text().await?;
-        Ok(body)
+        Ok(())
     }
 }

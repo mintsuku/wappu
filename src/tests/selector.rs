@@ -1,6 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use crate::{engine::selector::Selector, select_by_class, select_by_tag_name, HtmlParser, WappuClient}; // Assuming the HtmlElement struct is defined in a module named `html`
+    use crate::{
+        engine::selector::Selector, select_by_class, select_by_tag_name, HtmlParser, WappuClient,
+    }; // Assuming the HtmlElement struct is defined in a module named `html`
 
     #[test]
     fn test_html_parsing_and_selection() {
@@ -61,7 +63,10 @@ mod tests {
     #[tokio::test]
     async fn test_selection_request() {
         let client = WappuClient::new();
-        let result = client.get("https://doc.rust-lang.org/book/").await.unwrap();
+        let result = client
+            .get("https://doc.rust-lang.org/book/", None)
+            .await
+            .unwrap();
         let html = HtmlParser::new().parse_html(&result);
 
         let mut header_selector = Selector::new();
@@ -73,11 +78,14 @@ mod tests {
     #[tokio::test]
     async fn test_selection_macro() {
         let client = WappuClient::new();
-        let result = client.get("https://doc.rust-lang.org/book/").await.unwrap();
+        let result = client
+            .get("https://doc.rust-lang.org/book/", None)
+            .await
+            .unwrap();
         let html = HtmlParser::new().parse_html(&result);
 
         let header = select_by_class!(&html, "header");
-        
+
         // No need to manually create or mutate a `Selector` instance here
         assert_eq!(header.text().trim(), "The Rust Programming Language");
     }
@@ -85,12 +93,16 @@ mod tests {
     #[tokio::test]
     async fn test_selection_by_tag_macro() {
         let client = WappuClient::new();
-        let result = client.get("https://doc.rust-lang.org/book/").await.unwrap();
+        let result = client
+            .get("https://doc.rust-lang.org/book/", None)
+            .await
+            .unwrap();
         let html = HtmlParser::new().parse_html(&result);
 
         let header = select_by_tag_name!(&html, "h1");
-        
+
         // No need to manually create or mutate a `Selector` instance here
         assert_eq!(header.text().trim(), "The Rust Programming Language");
     }
+
 }
