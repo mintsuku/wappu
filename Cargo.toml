@@ -1,6 +1,6 @@
 [package]
 name = "wappu"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2021"
 description = "Wappu is a fast and flexible web scraping library for Rust, designed to efficiently navigate and extract data from websites. Perfect for data mining, content aggregation, and web automation tasks."
 license = "Apache-2.0"
@@ -14,5 +14,5 @@ path = "src/lib.rs"
 html5ever = "0.26.0"
 markup5ever = "0.11.0"
 markup5ever_rcdom = "0.2.0"
-reqwest = "0.11.24"
+reqwest = { version = "0.11.24", features = ["cookies"] }
 tokio = { version = "1.36.0", features = ["full"] }

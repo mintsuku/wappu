@@ -67,7 +67,7 @@ mod tests {
             .get("https://doc.rust-lang.org/book/", None)
             .await
             .unwrap();
-        let html = HtmlParser::new().parse_html(&result);
+        let html = HtmlParser::new().parse_html(&result.text());
 
         let mut header_selector = Selector::new();
         let header = header_selector.from_class_name("header").select(&html);
@@ -82,7 +82,7 @@ mod tests {
             .get("https://doc.rust-lang.org/book/", None)
             .await
             .unwrap();
-        let html = HtmlParser::new().parse_html(&result);
+        let html = HtmlParser::new().parse_html(&result.text());
 
         let header = select_by_class!(&html, "header");
 
@@ -97,7 +97,7 @@ mod tests {
             .get("https://doc.rust-lang.org/book/", None)
             .await
             .unwrap();
-        let html = HtmlParser::new().parse_html(&result);
+        let html = HtmlParser::new().parse_html(&result.text());
 
         let header = select_by_tag_name!(&html, "h1");
 

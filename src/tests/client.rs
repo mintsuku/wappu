@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod client_tests {
     use crate::WappuClient;
+    
 
     #[tokio::test]
     async fn test_wappu_client_get() {
@@ -21,7 +22,9 @@ mod client_tests {
     #[tokio::test]
     async fn test_wappu_client_put() {
         let client = WappuClient::new();
-        let result = client.put("https://httpbin.org/put", "body content", None).await;
+        let result = client
+            .put("https://httpbin.org/put", "body content", None)
+            .await;
         assert!(result.is_ok());
     }
 
@@ -55,7 +58,7 @@ mod client_error_tests {
     use reqwest::StatusCode;
     use tokio::time::{timeout, Duration};
 
-    use crate::{headers, WappuClient, WappuError};
+    use crate::{headers, WappuClient, WappuError, query_params};
 
     #[tokio::test]
     async fn test_wappu_client_get_network_error() {
@@ -129,14 +132,22 @@ mod client_error_tests {
     #[tokio::test]
     async fn test_wappu_client_delete_network_error() {
         let client = WappuClient::new();
-        let result = timeout(Duration::from_secs(2), client.delete("http://10.255.255.1", None)).await;
+        let result = timeout(
+            Duration::from_secs(2),
+            client.delete("http://10.255.255.1", None),
+        )
+        .await;
         assert!(result.is_err());
     }
 
     #[tokio::test]
     async fn test_wappu_client_head_network_error() {
         let client = WappuClient::new();
-        let result = timeout(Duration::from_secs(2), client.head("http://10.255.255.1", None)).await;
+        let result = timeout(
+            Duration::from_secs(2),
+            client.head("http://10.255.255.1", None),
+        )
+        .await;
         assert!(result.is_err());
     }
 
@@ -205,7 +216,9 @@ mod client_error_tests {
             .await
             .unwrap();
 
-        assert!(result.contains("\"User-Agent\": \"WappuClient/1.0\""));
+        assert!(result
+            .text()
+            .contains("\"User-Agent\": \"WappuClient/1.0\""));
     }
 
     #[tokio::test]
@@ -217,9 +230,66 @@ mod client_error_tests {
         };
 
         // httpbin.org/headers echoes back the headers it receives in a JSON format
-        let result = client.get("https://httpbin.org/headers", Some(headers)).await.unwrap();
+        let result = client
+            .get("https://httpbin.org/headers", Some(headers))
+            .await
+            .unwrap();
 
-        assert!(result.contains("\"User-Agent\": \"WappuClient/1.0\""));
-        assert!(result.contains("\"X-Custom-Header\": \"CustomValue\""));
+        assert!(result
+            .text()
+            .contains("\"User-Agent\": \"WappuClient/1.0\""));
+        assert!(result
+            .text()
+            .contains("\"X-Custom-Header\": \"CustomValue\""));
+    }
+
+    #[tokio::test]
+    async fn test_client_headers() {
+        let client = WappuClient::new();
+        let headers = headers! {
+            "User-Agent" => "WappuClient/1.0",
+            "X-Custom-Header" => "CustomValue",
+        };
+
+        let result = client
+            .get("https://httpbin.org/headers", Some(headers))
+            .await
+            .unwrap();
+
+        println!("{:?}", result.headers());
+        assert!(result.headers().contains_key("Date"));
+    }
+    #[tokio::test]
+    async fn test_client_cookies() {
+        let client = WappuClient::new();
+        let result = client.get("https://discord.com", None).await.unwrap();
+        assert!(result.cookies().contains_key("__sdcfduid"));
+    }
+
+    #[tokio::test]
+    async fn test_wappu_client_get_with_query_params() {
+        let client =
+            WappuClient::new().query_params(vec![("test".to_string(), "true".to_string())]);
+        let result = client.get("https://httpbin.org/get", None).await.unwrap();
+        let body = result.text();
+
+        // httpbin returns query parameters in the response body as JSON
+        assert!(body.contains(r#""test": "true""#));
+    }
+
+    #[tokio::test]
+    async fn test_wappu_client_get_with_macro_query_params() {
+        let params = query_params! {
+            "macroTest" => "passed",
+            "anotherParam" => "12345",
+        };
+        let client = WappuClient::new().query_params(params);
+        let result = client.get("https://httpbin.org/get", None).await.unwrap();
+        let body = result.text();
+        
+
+        // Verify that the response body contains the query parameters set by the macro
+        assert!(body.contains(r#""macroTest": "passed""#));
+        assert!(body.contains(r#""anotherParam": "12345""#));
     }
 }

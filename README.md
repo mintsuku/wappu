@@ -21,7 +21,7 @@ Add Wappu to your project's `Cargo.toml`:
 
 ```toml
 [dependencies]
-wappu = "0.2.2"
+wappu = "0.2.3"
 ```
 
 ### Quick Example
@@ -35,9 +35,9 @@ use tokio;
 #[tokio::main]
 async fn main() {
     let client = WappuClient::new();
-    let html_content = client.get("http://example.com").await.expect("Failed to fetch content");
+    let html_content = client.get("http://example.com", None).await.expect("Failed to fetch content");
 
-    let parsed_html = Html::new().parse_html(&html_content);
+    let parsed_html = Html::new().parse_html(&html_content.text());
     let title_selector = Selector::from_tag_name("h1");
     let title_selection = title_selector.select(&parsed_html);
     let title_text = title_selection.text();
