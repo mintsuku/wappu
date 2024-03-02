@@ -21,12 +21,8 @@ Add Wappu to your project's `Cargo.toml`:
 
 ```toml
 [dependencies]
-<<<<<<< HEAD
 wappu = "0.2.3"
-=======
-wappu = "0.2.2"
 reqwest = "0.11.24"
->>>>>>> 3f3fac55368f5a7c07fed99c671ab1df1effb743
 ```
 
 ### Quick Example
@@ -42,14 +38,8 @@ async fn main() {
     let client = WappuClient::new();
     let html_content = client.get("http://example.com", None).await.expect("Failed to fetch content");
 
-<<<<<<< HEAD
     let parsed_html = Html::new().parse_html(&html_content.text());
     let title_selector = Selector::from_tag_name("h1");
-=======
-    let parsed_html = HtmlParser::new().parse_html(&html_content);
-    let mut selector = Selector::new();
-    let title_selector = selector.from_tag_name("title");
->>>>>>> 3f3fac55368f5a7c07fed99c671ab1df1effb743
     let title_selection = title_selector.select(&parsed_html);
     let title_text = title_selection.text();
 
