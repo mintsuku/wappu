@@ -31,15 +31,14 @@ Here's a quick example to fetch and parse the title of example.com:
 
 ```rust
 use wappu::{WappuClient, HtmlParser, Selector};
-use tokio;
-
 #[tokio::main]
 async fn main() {
     let client = WappuClient::new();
     let html_content = client.get("http://example.com", None).await.expect("Failed to fetch content");
 
-    let parsed_html = Html::new().parse_html(&html_content.text());
-    let title_selector = Selector::from_tag_name("h1");
+    let parsed_html = HtmlParser::new().parse_html(&html_content.text());
+    let mut selector = Selector::new();
+    let title_selector = selector.from_tag_name("h1");
     let title_selection = title_selector.select(&parsed_html);
     let title_text = title_selection.text();
 
