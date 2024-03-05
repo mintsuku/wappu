@@ -46,6 +46,12 @@ impl Selector {
         Selection::new(selected)
     }
 
+    pub fn select_first<'a>(&self, element: &'a HtmlElement) -> Option<&'a HtmlElement> {
+        let mut selected: Vec<&'a HtmlElement> = Vec::new();
+        self.select_recursive(element, &mut selected);
+        selected.into_iter().next()
+    }
+
     fn select_recursive<'a>(&self, element: &'a HtmlElement, selected: &mut Vec<&'a HtmlElement>) {
         if self.tag_name.as_ref() == element.tag_name.as_ref() || self.matches_class(element) {
             selected.push(element);
@@ -69,7 +75,16 @@ impl Selector {
 
 #[derive(Debug)]
 pub struct Selection<'a> {
-    elements: Vec<&'a HtmlElement>,
+    pub elements: Vec<&'a HtmlElement>,
+}
+
+impl<'a> IntoIterator for Selection<'a> {
+    type Item = &'a HtmlElement;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.elements.into_iter()
+    }
 }
 
 impl<'a> Selection<'a> {

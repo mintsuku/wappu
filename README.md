@@ -21,7 +21,7 @@ Add Wappu to your project's `Cargo.toml`:
 
 ```toml
 [dependencies]
-wappu = "0.2.3"
+wappu = "0.2.4"
 reqwest = "0.11.24"
 ```
 

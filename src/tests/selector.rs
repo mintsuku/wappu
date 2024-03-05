@@ -105,4 +105,55 @@ mod tests {
         assert_eq!(header.text().trim(), "The Rust Programming Language");
     }
 
+    #[test]
+    fn test_iteration_over_multiple_elements() {
+        let parser = HtmlParser::new();
+        let html = r#"
+            <div class="links">
+                <a href="https://example.com/1">Link 1</a>
+                <a href="https://example.com/2">Link 2</a>
+                <a href="https://example.com/3">Link 3</a>
+            </div>
+        "#;
+
+        let parsed_html = parser.parse_html(html);
+        let mut selector = Selector::new();
+        let links_selection = selector.from_tag_name("a").select(&parsed_html);
+
+        // Using the iterator to access each link's href attribute
+        let hrefs: Vec<Option<String>> = links_selection.into_iter().map(|elem| {
+            elem.attributes.get("href").cloned()
+        }).collect();
+
+        // Asserting that we have the expected hrefs
+        assert_eq!(hrefs, vec![
+            Some("https://example.com/1".to_string()),
+            Some("https://example.com/2".to_string()),
+            Some("https://example.com/3".to_string())
+        ]);
+    }
+
+    #[test]
+    fn test_selecting_specific_element_from_multiple() {
+        let parser = HtmlParser::new();
+        let html = r#"
+            <div class="links">
+                <a href="https://example.com/1">Link 1</a>
+                <a href="https://example.com/special">Special Link</a>
+                <a href="https://example.com/3">Link 3</a>
+            </div>
+        "#;
+
+        let parsed_html = parser.parse_html(html);
+        let links_selection = Selector::new().from_tag_name("a").select(&parsed_html);
+
+        // Iterate over links and find the one with the specific href attribute
+        let special_link = links_selection.into_iter().find(|elem| {
+            elem.attributes.get("href") == Some(&"https://example.com/special".to_string())
+        }).expect("Special link not found");
+
+        // Asserting that we have the correct text for the special link
+        assert_eq!(special_link.text, "Special Link");
+    }
+
 }
