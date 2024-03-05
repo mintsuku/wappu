@@ -125,6 +125,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06ea2b9bc92be3c2baa9334a323ebca2d6f074ff852cd1d7b11064035cd3868f"
 
 [[package]]
+name = "ebay"
+version = "0.1.0"
+dependencies = [
+ "reqwest",
+ "tokio",
+ "wappu 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "encoding_rs"
 version = "0.8.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -268,6 +277,15 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
+]
+
+[[package]]
+name = "hacker_news"
+version = "0.1.0"
+dependencies = [
+ "reqwest",
+ "tokio",
+ "wappu 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1263,6 +1281,19 @@ dependencies = [
 [[package]]
 name = "wappu"
 version = "0.2.4"
+dependencies = [
+ "html5ever",
+ "markup5ever",
+ "markup5ever_rcdom",
+ "reqwest",
+ "tokio",
+]
+
+[[package]]
+name = "wappu"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97a2fa4c7d153bf72f85e644227655d7657b116a5e8fe9a1e7e0964526d17b59"
 dependencies = [
  "html5ever",
  "markup5ever",
