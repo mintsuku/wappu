@@ -36,7 +36,6 @@ async fn main() {
             .first()
             .map_or("Unknown author", |e| &e.text);
 
-        // Fix for the type mismatch error
         let comments = select_by_tag_name!(details, "a")
             .elements
             .iter()
