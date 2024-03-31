@@ -8,6 +8,7 @@ Wappu is a comprehensive web scraping library written in Rust, designed for ease
 - **HTML Parsing**: Easily parse and query HTML documents to extract relevant data.
 - **Flexible Selectors**: Use CSS-like selectors to pinpoint and extract elements from parsed HTML.
 - **Error Handling**: Robust error handling for both network requests and HTML parsing.
+- **Captcha Support**: Integrates with Captcha solving API's to solve CAPTCHAs encountered during web scraping.
 
 ## Getting Started
 
@@ -21,7 +22,7 @@ Add Wappu to your project's `Cargo.toml`:
 
 ```toml
 [dependencies]
-wappu = "0.2.4"
+wappu = "0.3.0"
 reqwest = "0.11.24"
 ```
 
@@ -30,7 +31,10 @@ reqwest = "0.11.24"
 Here's a quick example to fetch and parse the title of example.com:
 
 ```rust
-use wappu::{WappuClient, HtmlParser, Selector};
+use wappu::html::HtmlParser;
+use wappu::selector::Selector;
+use wappu::client::WappuClient;
+
 #[tokio::main]
 async fn main() {
     let client = WappuClient::new();
