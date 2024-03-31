@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::HtmlParser;
+    use crate::html::HtmlParser;
 
     #[test]
     fn test_parse_example_com_html() {

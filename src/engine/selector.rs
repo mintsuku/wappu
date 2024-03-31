@@ -14,10 +14,17 @@ macro_rules! select_by_class {
     };
 }
 
+#[macro_export]
+macro_rules! select_by_id {
+    ($element:expr, $id:expr) => {
+        Selector::new().from_id($id).select($element)
+    };
+}
 
 pub struct Selector {
     tag_name: Option<String>,
     class_name: Option<String>,
+    id: Option<String>,
 }
 
 impl Selector {
@@ -25,9 +32,9 @@ impl Selector {
         Selector {
             tag_name: None,
             class_name: None,
+            id: None,
         }
     }
-
 
     pub fn from_tag_name(&mut self, tag_name: &str) -> &mut Self {
         self.tag_name = Some(tag_name.to_string());
@@ -35,8 +42,12 @@ impl Selector {
     }
 
     pub fn from_class_name(&mut self, class_name: &str) -> &mut Self {
-        self.class_name = Some
-        (class_name.to_string());
+        self.class_name = Some(class_name.to_string());
+        self
+    }
+
+    pub fn from_id(&mut self, id: &str) -> &mut Self {
+        self.id = Some(id.to_string());
         self
     }
 
@@ -53,7 +64,10 @@ impl Selector {
     }
 
     fn select_recursive<'a>(&self, element: &'a HtmlElement, selected: &mut Vec<&'a HtmlElement>) {
-        if self.tag_name.as_ref() == element.tag_name.as_ref() || self.matches_class(element) {
+        if self.tag_name.as_ref() == element.tag_name.as_ref()
+            || self.matches_class(element)
+            || self.matches_id(element)
+        {
             selected.push(element);
         }
         for child in &element.children {
@@ -63,11 +77,16 @@ impl Selector {
 
     fn matches_class(&self, element: &HtmlElement) -> bool {
         match self.class_name {
-            Some(ref class_name) => {
-                element.attributes.get("class").map_or(false, |classes| {
-                    classes.split_whitespace().any(|class| class == class_name)
-                })
-            }
+            Some(ref class_name) => element.attributes.get("class").map_or(false, |classes| {
+                classes.split_whitespace().any(|class| class == class_name)
+            }),
+            None => false,
+        }
+    }
+
+    fn matches_id(&self, element: &HtmlElement) -> bool {
+        match self.id {
+            Some(ref id) => element.attributes.get("id") == Some(id),
             None => false,
         }
     }
@@ -98,6 +117,8 @@ impl<'a> Selection<'a> {
             .map(|elem| elem.text.clone())
             .collect::<Vec<String>>()
             .join(" ")
+            .trim()
+            .to_string()
     }
 
     pub fn tag_name(&self) -> Option<String> {

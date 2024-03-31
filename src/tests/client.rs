@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod client_tests {
-    use crate::WappuClient;
-    
+    use crate::client::WappuClient;
 
     #[tokio::test]
     async fn test_wappu_client_get() {
@@ -48,7 +47,6 @@ mod client_tests {
     async fn test_wappu_client_head() {
         let client = WappuClient::new();
         let result = client.head("https://httpbin.org/get", None).await;
-        // HEAD requests don't have a response body, so we check for a successful status code instead
         assert!(matches!(result, Ok(_)));
     }
 }
@@ -58,7 +56,7 @@ mod client_error_tests {
     use reqwest::StatusCode;
     use tokio::time::{timeout, Duration};
 
-    use crate::{headers, WappuClient, WappuError, query_params};
+    use crate::{headers, query_params, client::WappuClient, client::WappuError};
 
     #[tokio::test]
     async fn test_wappu_client_get_network_error() {
@@ -85,7 +83,7 @@ mod client_error_tests {
         // Expecting an unexpected status code error
         assert!(
             result.is_ok()
-                && matches!(result.unwrap(), Err(WappuError::UnexpectedStatusCode(code)) if code == StatusCode::NOT_FOUND)
+                && matches!(result.unwrap(), Err(WappuError::UnexpectedStatusCode(code, _)) if code == StatusCode::NOT_FOUND)
         );
     }
 
@@ -114,7 +112,7 @@ mod client_error_tests {
         // Expecting an unexpected status code error
         assert!(
             result.is_ok()
-                && matches!(result.unwrap(), Err(WappuError::UnexpectedStatusCode(code)) if code == StatusCode::NOT_FOUND)
+                && matches!(result.unwrap(), Err(WappuError::UnexpectedStatusCode(code, _)) if code == StatusCode::NOT_FOUND)
         );
     }
 
@@ -166,12 +164,27 @@ mod client_error_tests {
     #[tokio::test]
     async fn test_wappu_client_put_unexpected_status_code() {
         let client = WappuClient::new();
+
         let result = client
             .put("http://example.com/notfound", "body content", None)
             .await;
-        assert!(
-            matches!(result, Err(WappuError::UnexpectedStatusCode(code)) if code == StatusCode::NOT_FOUND)
-        );
+
+        // Expecting an unexpected status code error with the correct status code and response text
+        match result {
+            Err(WappuError::UnexpectedStatusCode(code, text)) => {
+                assert!(text.contains("Not Found"));
+                assert!(matches!(code, StatusCode::INTERNAL_SERVER_ERROR));
+            }
+            Ok(_) => {
+                panic!("Expected WappuError::UnexpectedStatusCode, but got Ok");
+            }
+            Err(err) => {
+                panic!(
+                    "Expected WappuError::UnexpectedStatusCode, but got other error: {}",
+                    err
+                );
+            }
+        }
     }
 
     #[tokio::test]
@@ -179,7 +192,7 @@ mod client_error_tests {
         let client = WappuClient::new();
         let result = client.delete("https://httpbin.org/status/404", None).await;
         assert!(
-            matches!(result, Err(WappuError::UnexpectedStatusCode(code)) if code == StatusCode::NOT_FOUND)
+            matches!(result, Err(WappuError::UnexpectedStatusCode(code, _)) if code == StatusCode::NOT_FOUND)
         );
     }
 
@@ -188,7 +201,7 @@ mod client_error_tests {
         let client = WappuClient::new();
         let result = client.head("http://example.com/notfound", None).await;
         assert!(
-            matches!(result, Err(WappuError::UnexpectedStatusCode(code)) if code == StatusCode::NOT_FOUND)
+            matches!(result, Err(WappuError::UnexpectedStatusCode(code, _)) if code == StatusCode::NOT_FOUND)
         );
     }
 
@@ -199,7 +212,7 @@ mod client_error_tests {
             .patch("https://httpbin.org/status/404", "body content", None)
             .await;
         assert!(
-            matches!(result, Err(WappuError::UnexpectedStatusCode(code)) if code == StatusCode::NOT_FOUND)
+            matches!(result, Err(WappuError::UnexpectedStatusCode(code, _)) if code == StatusCode::NOT_FOUND)
         );
     }
     #[tokio::test]
@@ -286,7 +299,6 @@ mod client_error_tests {
         let client = WappuClient::new().query_params(params);
         let result = client.get("https://httpbin.org/get", None).await.unwrap();
         let body = result.text();
-        
 
         // Verify that the response body contains the query parameters set by the macro
         assert!(body.contains(r#""macroTest": "passed""#));

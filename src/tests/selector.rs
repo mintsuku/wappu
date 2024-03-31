@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod tests {
     use crate::{
-        engine::selector::Selector, select_by_class, select_by_tag_name, HtmlParser, WappuClient,
-    }; // Assuming the HtmlElement struct is defined in a module named `html`
+        client::WappuClient, engine::selector::Selector, html::HtmlParser, select_by_class, select_by_id, select_by_tag_name
+    };
 
     #[test]
     fn test_html_parsing_and_selection() {
@@ -156,4 +156,25 @@ mod tests {
         assert_eq!(special_link.text, "Special Link");
     }
 
+    #[test]
+    fn test_selection_by_id() {
+        let html = r#"
+            <div id="container">
+                <h1 id="title">Hello, World!</h1>
+                <p id="content">This is a test.</p>
+            </div>
+        "#;
+
+        let parsed_html = HtmlParser::new().parse_html(html);
+
+        let mut selector = Selector::new();
+        let title_selection = selector.from_id("title").select(&parsed_html);
+        assert_eq!(title_selection.text(), "Hello, World!");
+        assert_eq!(title_selection.tag_name(), Some("h1".to_string()));
+
+        let content_selection = select_by_id!(&parsed_html, "content");
+        assert_eq!(content_selection.text(), "This is a test.");
+        assert_eq!(content_selection.tag_name(), Some("p".to_string()));
+    }
 }
+
